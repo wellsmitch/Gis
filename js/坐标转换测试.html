@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="jquery.js"></script>
+    <script src="ol-debug.js"></script>
+    <script src="proj4-src.js"></script>
+    <script src="transferProjection.js"></script>
+</head>
+<body>
+<input type="text" id="coordinate">
+<button>转换</button>
+<script type="text/javascript">
+	// 38467421.19785093,3865587.0333145433
+    $('button').click(function () {
+        console.log(ol.proj.transform($("#coordinate").val(), "EPSG:4526", "EPSG:4326"));
+    });
+</script>
+</body>
+</html>

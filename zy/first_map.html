@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>我的第一个地图</title>
+		<link type="text/css" href="../lib/layui/css/layui.css" />
+		<link type="text/css" href="../lib/ol3/css/ol.css" />
+		<style>
+			#mapCon {width: 100%;height: 95%;position: absolute;}
+		</style>
+
+    </head>
+	<body>
+
+    <div id="mapCon"></div>
+
+    <script src="../js/jquery.js"></script>
+    <script src="../js/ol-debug.js"></script>
+    <script src="../js/proj4-src.js"></script>
+    <script src="../js/transferProjection.js"></script>
+    <script src="../js/zondyClient.js"></script>
+    <script src="../js/config.js"></script>
+
+
+    <script type="text/javascript">
+
+        console.log(globalMapConfig);
+
+        var serverIp = globalMapConfig.serverIp,
+            serverPort = globalMapConfig.serverPort
+
+
+        var maxResolution = globalMapConfig.maxResolution, resolutions = new Array(), matrixIds = new Array();
+        for (var z = 0; z <= 19; z++) {
+            resolutions[z] = maxResolution / Math.pow(2, z);
+            matrixIds[z] = z;
+        }
+
+
+
+
+
+        var map = new ol.Map({
+            target: 'mapCon',
+            view: new ol.View({
+                center: globalMapConfig.viewCenter,
+                zoom: globalMapConfig.initZoom,
+                maxZoom: globalMapConfig.maxZoom,
+                minZoom: globalMapConfig.minZoom,
+                projection: ol.proj.get(globalMapConfig.localProjection)
+            }),
+            controls: ol.control.defaults({
+                attribution: false,
+                zoom: false
+            })
+        });
+
+        // 行政区划
+        var  layer = globalMapConfig.baseWtmsLayerEn,
+             baseWtmsUrl = globalMapConfig.baseWtmsUrl;
+        var baseWmtsLayer = new ol.layer.Tile({
+            opacity : 1,
+            title : '行政区划底图',
+            source : new ol.source.WMTS({
+                url : 'http://' + serverIp + ':' + serverPort + baseWtmsUrl,
+                layer : layer,
+                style: 'default',
+                // format: 'image/png',
+                tileGrid: new ol.tilegrid.WMTS({
+                    origin: [0, 0],
+                    resolutions: resolutions,
+                    matrixIds: matrixIds
+                })
+            })
+        });
+
+        // 宗地
+        var zdUrlLayer = globalMapConfig.zongdLayerNameEn,
+            zdUrl = globalMapConfig.zongdWmsUrl;
+
+        var zdlayer = new ol.layer.Image({
+            opacity: 1,
+            source: new ol.source.ImageWMS({
+                opacity : 1,
+                title : '宗地',
+                url : 'http://' + serverIp + ':' + serverPort + zdUrl,
+                layer : zdUrlLayer,
+                style: 'default',
+                params: {
+                    'LAYERS': globalMapConfig.zongdWmsLayerCode,
+                    "VERSION":"1.1.1"
+                },
+                // format: 'image/png',
+                // tileGrid: new ol.tilegrid.WMTS({
+                //     origin: [0, 0],
+                //     resolutions: resolutions,
+                //     matrixIds: matrixIds
+                // })
+            })
+        });
+
+        // map.addLayer(baseWmtsLayer);
+        map.addLayer(zdlayer);
+        console.log(map);
+
+    </script>
+	</body>
+</html>

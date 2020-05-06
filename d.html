@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+	$.ajax({
+			type:"get",
+			url:"http://jx.xuzhixiang.top/ap/api/login.php?username=11&password=1212",
+			async:true,
+			success:function(data) {
+                console.log(data)
+			}
+		});
+	console.log(123456498)
+</script>
+</body>
+</html>

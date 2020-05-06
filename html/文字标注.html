@@ -1,0 +1,326 @@
+<!DOCTYPE HTML>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>添加文字标注</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="../css/ol.css">
+    <!--<script src="../js/ol.js"></script>    -->
+    <script src="../js/ol-debug.js"></script>
+
+    <style type="text/css">
+        body, html, div, ul, li, iframe, p, img {
+            border: none;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            font-family: "微软雅黑";
+        }
+
+        #mapCon {
+            width: 100%;
+            height: 95%;
+            position: absolute;
+        }
+        /* 图层控件层样式设置 */
+        .layerControl {
+            position: absolute;
+            bottom: 5px;
+            min-width: 200px;
+            max-height: 200px;
+            right: 0px;
+            top: 5px;
+            /*在地图容器中的层，要设置z-index的值让其显示在地图上层*/
+            z-index: 2001;
+            color: #ffffff;
+            background-color: #4c4e5a;
+            /*边缘的宽度*/
+            border-width: 10px;
+            /*圆角的大小 */
+            border-radius: 10px;
+            /*边框颜色*/
+            border-color: #000 #000 #000 #000;
+        }
+
+        .layerControl .title {
+            font-weight: bold;
+            font-size: 15px;
+            margin: 10px;
+        }
+
+        .layerTree li {
+            list-style: none;
+            margin: 5px 10px;
+        }
+        /* 鼠标位置控件层样式设置 */
+        #mouse-position {
+            float: left;
+            position: absolute;
+            bottom: 5px;
+            width: 330px;
+            height: 20px;
+            /*在地图容器中的层，要设置z-index的值让其显示在地图上层*/
+            z-index: 2000;
+        }
+    </style>
+    <!--<script src="../js/secret.js"></script>-->
+    <style type="text/css">
+        body, html, div, ul, li, iframe, p, img {
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #mapCon {
+            width: 100%;
+            height: 90%;
+            position: absolute;
+        }
+
+        #menu {
+            width: 100%;
+            height: 20px;
+            padding: 5px 10px;
+            font-size: 14px;
+            font-family: "微软雅黑";
+            left: 10px;
+        }
+
+        .checkbox {
+            margin: 5px 15px;
+        }
+
+        .marker {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #088;
+            border-radius: 10px;
+            background-color: #0FF;
+            opacity: 0.5;
+        }
+
+        .address {
+            text-decoration: none;
+            color: #aa3300;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: black 0.1em 0.1em 0.2em;
+        }
+    </style>
+    <script src="../js/proj4-src.js"></script>
+    <script src="../js/transferProjection.js"></script>
+
+</head>
+<body>
+<div class="ToolLib">
+    <input type="button" class="ButtonLib" id="type" value="添加文字标注" onclick="Addmarker()" />&nbsp;&nbsp;
+    <label style="font-weight: bold;">
+        点击按钮，之后在图上点击添加文字标注。
+    </label>
+</div>
+<div id="mapCon">
+</div>
+<div id="label" style="display: none;">
+    <div id="marker" class="marker" title="Marker">
+        <a class="address" id="address" target="_blank" href="http://www.openlayers.org/">标注点</a>
+    </div>
+</div>
+<script type="text/javascript">
+    // var beijing = ol.proj.fromLonLat([116.28, 39.54]);
+
+////////
+//     var vector = new ol.layer.Vector({
+//         source: new ol.source.Vector({
+//             format: new ol.format.GeoJSON(),
+//             url: 'http://10.0.0.114:6160/igs/rest/ogc/doc/QS4101002014ZDJBXX/WFSServer?service=wfs&version=1.1.0&request=GetFeature&typeName=QS4101002014ZDJBXX:D410100QS2014KZDJBXX&outputFormat=text/xml;%20subtype=gml/3.1.1&srsname=EPSG:4526'
+//             //url: 'http://10.0.0.114:6160/igs/rest/ogc/doc/QS4101002014ZDJBXX/WFSServer?service=wfs&version=1.1.0&request=GetFeature&typeName=QS4101002014ZDJBXX:D410100QS2014KZDJBXX&text/xml; subtype=gml/3.1.1&srsname=EPSG:4526'
+//         }),
+//         style: function(feature, resolution) {
+//             return new ol.style.Style({
+//                 stroke: new ol.style.Stroke({
+//                     color: 'blue',
+//                     width: 1
+//                 })
+//             });
+//         }
+//     });
+ ///////////////
+
+    //实例化Map对象加载地图,默认底图加载天地图
+    // var map = new ol.Map({
+    //     layers: [
+    //         new ol.layer.Tile({
+    //             title: "天地图矢量图层",
+    //             source: new ol.source.XYZ({
+    //                 url: "http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=" + parent.TiandituKey(),//parent.TiandituKey()为天地图密钥
+    //                 wrapX: false
+    //             })
+    //         }),
+    //         new ol.layer.Tile({
+    //             title: "天地图矢量注记图层",
+    //             source: new ol.source.XYZ({
+    //                 url: "http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=" + parent.TiandituKey(),//parent.TiandituKey()为天地图密钥
+    //                 wrapX: false
+    //             })
+    //         })
+    //     ],
+    //     //地图容器div的ID
+    //     target: 'mapCon',
+    //     view: new ol.View({
+    //         //地图初始中心点
+    //         center: beijing,
+    //         minZoom: 1,
+    //         zoom: 2
+    //     })
+    // });
+
+    /**
+     * 创建矢量标注样式函数,设置image为图标ol.style.Icon
+     * @param {ol.Feature} feature 要素
+     */
+    var createLabelStyle = function (feature) {
+        return new ol.style.Style({
+            text: new ol.style.Text({
+                //位置
+                textAlign: 'left',
+                //基准线
+                textBaseline: 'bottom',
+                //文字样式
+                font: 'normal 14px 微软雅黑',
+                //文本内容
+                text: feature.get('name'),
+                //文本填充样式（即文字颜色）
+                fill: new ol.style.Fill({ color: '#aa3300' }),
+              //  stroke: new ol.style.Stroke({ color: '#ffcc33', width: 2 })
+            })
+        });
+    };
+// https://openlayers.org/en/latest/examples/vector-labels.html?q=label
+
+var lineStr = '38467421.19785093,3865587.0333145433 38478178.583794676,3850929.3171545677 38465335.18220507,3844874.742394285 38467421.19785093,3865587.0333145433';
+ //   var xy = ol.proj.transform(event.coordinate,  "EPSG:4526", "EPSG:4326");
+console.log(lineStr);
+lineStr = lineStr.split(' ');
+    console.log(lineStr);
+  //  var lineArr = [];
+for(var i =0;i < lineStr.length;i++) {
+    // console.log(lineStr[i]);
+    console.log([lineStr[i].split(',')[0],lineStr[i].split(',')[1]]);
+   var xy = ol.proj.transform([parseFloat(lineStr[i].split(',')[0]), parseFloat(lineStr[i].split(',')[1])],  "EPSG:4526", "EPSG:4326");
+   console.log(xy);
+    // lineArr.push([lineStr[i].split(',')[0], lineStr[i].split(',')[1]])
+}
+// console.log(lineArr);
+    //创建一个点
+    var point = new ol.Feature({
+        geometry: new ol.geom.Point([11505912.0, 4011415.0])
+    });
+    //设置点1的样式信息
+    point.setStyle(new ol.style.Style({
+        //填充色
+        fill: new ol.style.Fill({
+            color: 'rgba(255, 255, 255, 0.2)'
+        }),
+        //边线颜色
+        stroke: new ol.style.Stroke({
+            color: '#ffcc33',
+            width: 2
+        }),
+        //形状
+        image: new ol.style.Circle({
+            radius: 3,
+            fill: new ol.style.Fill({
+                color: '#000000'
+
+            })
+        })
+    }));
+
+    //实例化一个矢量图层Vector作为绘制层
+    var source1 = new ol.source.Vector({
+        features: [point]
+    });
+    //创建一个图层
+    var vector1 = new ol.layer.Vector({
+        source: source1
+    });
+    //将绘制层添加到地图容器中
+    map.addLayer(vector1);
+
+
+    //为地图容器添加单击事件监听
+    function Addmarker() {
+        map.on('click', function (evt) {
+            //鼠标单击点坐标
+            var point = evt.coordinate;
+            console.log(point);
+            //添加一个新的标注（矢量要素）
+            addVectorLabel(point);
+        });
+    }
+
+
+    //实例化Vector要素，通过矢量图层添加到地图容器中
+    var markerText = [
+        [11505912.0, 4011415.0]
+    ];
+    var iconFeatureArr = [];
+    // for (var i = 0;i < markerText.length;i++) {
+    //     var iconFeature = new ol.Feature({
+    //         geometry: new ol.geom.Point(markerText[i]),
+    //         //名称属性
+    //         name: '北京市1',
+    //         //大概人口数（万）
+    //         population: 2115
+    //     });
+    //     iconFeature.setStyle(createLabelStyle(iconFeature));
+    //     iconFeatureArr.push(iconFeature);
+    // }
+    // highLightLayer.getSource().addFeature(polygon)
+    //矢量标注的数据源
+    var vectorSource = new ol.source.Vector({
+        features: iconFeatureArr
+    });
+    //矢量标注图层
+    var vectorLayer = new ol.layer.Vector({
+        source: vectorSource
+    });
+    map.addLayer(vectorLayer);
+
+    for (var i = 0;i < markerText.length;i++) {
+        var iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point(markerText[i]),
+            //名称属性
+            name: '北京市1',
+            //大概人口数（万）
+            population: 2115
+        });
+        iconFeature.setStyle(createLabelStyle(iconFeature));
+        // iconFeatureArr.push(iconFeature);
+        vectorLayer.getSource().addFeature(iconFeature)
+    }
+
+
+
+
+    /**
+     * 添加一个新的标注（矢量要素）
+     * @param {ol.Coordinate} coordinate 坐标点
+     */
+    function addVectorLabel(coordinate) {
+        //新建一个要素 ol.Feature
+        var newFeature = new ol.Feature({
+            //几何信息
+            geometry: new ol.geom.Point(coordinate),
+            //名称属性
+            name: '标注点'
+        });
+        //设置要素的样式
+        newFeature.setStyle(createLabelStyle(newFeature));
+        //将新要素添加到数据源中
+        vectorSource.addFeature(newFeature);
+    }
+</script>
+</body>
+</html>

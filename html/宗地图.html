@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>加载图层控件（自定义）</title>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+    <link rel="stylesheet" href="../css/ol.css">
+    <!--<script src="../js/ol.js"></script>-->
+    <style type="text/css">
+        body, html, div, ul, li, iframe, p, img {
+            border: none;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            font-family: "微软雅黑";
+        }
+
+        #mapCon {
+            width: 100%;
+            height: 95%;
+            position: absolute;
+        }
+
+    </style>
+    <script src="../js/jquery.js"></script>
+    <!--<script src="../js/secret.js"></script>-->
+    <script src="../js/ol-debug.js"></script>
+    <script src="../js/proj4-src.js"></script>
+    <script src="../js/zondyClient.js"></script>
+    <script src="../js/transferProjection.js"></script>
+    <script src="../js/jquery.PrintArea.js"></script>
+    <style>
+        @page {
+            size: a4 landscape;
+            margin: 0;
+        }
+        .ol-overlaycontainer-stopevent {
+            display: none;
+        }
+    </style>
+    <script type="text/javascript">
+    function unitConversion() {
+        /**
+         * 获取DPI
+         * @returns {Array}
+         */
+        this.conversion_getDPI =function () {
+            var arrDPI = new Array;
+            if (window.screen.deviceXDPI) {
+                arrDPI[0] = window.screen.deviceXDPI;
+                arrDPI[1] = window.screen.deviceYDPI;
+            } else {
+                var tmpNode = document.createElement("DIV");
+                tmpNode.style.cssText = "width:1in;height:1in;position:absolute;left:0px;top:0px;z-index:99;visibility:hidden";
+                document.body.appendChild(tmpNode);
+                arrDPI[0] = parseInt(tmpNode.offsetWidth);
+                arrDPI[1] = parseInt(tmpNode.offsetHeight);
+                tmpNode.parentNode.removeChild(tmpNode);
+            }
+            return arrDPI;
+        };
+        /**
+         * px转换为mm
+         * @param value
+         * @returns {number}
+         */
+        this.pxConversionMm = function (value) {
+            var inch = value/this.conversion_getDPI()[0];
+            var c_value = inch * 25.4;
+//      console.log(c_value);
+            return c_value;
+        };
+        /**
+         * mm转换为px
+         * @param value
+         * @returns {number}
+         */
+        this.mmConversionPx = function (value) {
+            var inch = value/25.4;
+            var c_value = inch*this.conversion_getDPI()[0];
+//      console.log(c_value);
+            return c_value;
+        }
+    }
+
+    //调用直接 new unitConversion().pxConversionMm(像素)
+    //        new unitConversion().mmConversionPx (毫米)
+</script>
+
+
+</head>
+<body>
+<div id="zyPrintConWraper" style="padding: 10mm 15mm 8mm;box-sizing: border-box;height: 100%;width: 210mm;margin: 0 auto">
+    <div id="zyPrintCon" style="height: 100%;position: relative">
+        <img style="width: 10mm;height: 10mm;position: absolute;right: 12mm;top: 40mm;" src="./north.png" alt="">
+        <div style="font-size: 8mm;text-align: center;font-weight: 800;line-height: 14mm;position: relative">宗&nbsp;&nbsp;&nbsp;地&nbsp;&nbsp;&nbsp;图 <span style="position: absolute;font-size: 4mm;line-height: 1;right: 30px;bottom: 1mm;font-weight: normal">单位：m.㎡</span></div>
+        <div style="border: 2px solid #000;overflow: hidden">
+            <div style="overflow: hidden;line-height: 5mm;border-bottom: 1px solid #000;padding-left: 2mm;box-sizing: border-box">
+
+                <div style="float: left;overflow: hidden;width: 100%;">
+                    <div style="overflow: hidden;float:left;width: 50% ">
+                        <p style="float: left">宗&nbsp;地&nbsp;代&nbsp;码：</p>
+                        <p id="zondy_code" style="float: left"></p>
+                    </div>
+
+                    <div style="overflow: hidden;float:left;width: 50%">
+                        <p style="float: left;width: 26mm">土地权利人：</p>
+                        <p style="float: left;width: calc(100% - 26mm)" id="tudi_quanliren"></p>
+                    </div>
+
+                </div>
+
+                <div style="overflow: hidden;float: left;width: 100%;">
+                    <div style="overflow: hidden;float:left;width: 50%">
+                        <p style="float: left">所在图幅号：</p>
+                        <p id="tufuhao" style="float: left"></p>
+                    </div>
+                    <div style="overflow: hidden;float:left;width: 50%">
+                        <p style="float: left;width: 26mm;">宗&nbsp;地&nbsp;面&nbsp;积：</p>
+                        <p style="float: left" id="area_num"></p>
+                    </div>
+                </div>
+            </div>
+            <div id="mapCon" style="width: 100%; height: 210mm; position: relative;"></div>
+            <img id="mapConImage" src="" style="width: 100%;height: 210mm;display: none" alt="">
+        </div>
+        <div style="font-size: 3mm;padding-top: 3mm;box-sizing: border-box;overflow: hidden">
+            <div style="float: left;width: 33.33%">
+                <div>2019年7月解析法测绘界址点</div>
+                <div>制图日期：2019年7月17日</div>
+                <div>审核日期：2019年7月17日</div>
+            </div>
+
+            <div style="float: left;width: 33.33%;text-align: center" id="map_line">
+                <!--1:1500-->
+            </div>
+
+            <div style="float: left;width: 33.33%;overflow: hidden">
+                <div style="display:inline-block;width: 32mm;float: right">
+                    <div>制图者：张蕾</div>
+                    <div>审核者：张宁</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--<div style="border: 1px solid #000;width: 17.72mm;height: 1mm;margin-top: -10px;margin-left: 13px"></div>-->
+<!--<div id="ScaleLine" style="height: 50px;border: 1px saddlebrown solid;"></div>-->
+
+<script type="text/javascript">
+
+    //实例化Map对象加载地图,默认底图加载天地图
+    var scaleLineControl = new ol.control.ScaleLine({
+        //设置比例尺单位，degrees、imperial、us、nautical、metric（度量单位）
+        units: "metric"
+    });
+    var map = new ol.Map({
+        //地图容器div的ID
+        target: 'mapCon',
+        interactions: ol.interaction.defaults({
+            mouseWheelZoom: false,
+            dragPan: false
+        }),
+        view: new ol.View({
+            //地图初始中心点
+            center: [113.62308916005098, 34.708010970069835],
+            minZoom: 2,
+            zoom: 1,
+            extent: [112.763268988431, 34.3203480200015, 114.108961117027, 35.1369637349141],
+            projection: "EPSG:4326"
+        }),
+        controls: ol.control.defaults({
+            attribution: false,
+            zoom: false
+        }).extend([scaleLineControl])
+    });
+
+    // var ScaleLineControl = new ol.control.ScaleLine({
+    //     target: document.getElementById("ScaleLine"),
+    //     projection: "EPSG:4326"
+    // });
+    // map.addControl(ScaleLineControl);
+    function ScaleLineFun() {
+        setTimeout(function () {
+            var  line_data;
+            if($('.ol-scale-line-inner').text().trim().indexOf('mm') != -1) {
+                line_data = (Number($('.ol-scale-line-inner').eq(0).text().trim().split(' ')[0] / 1000) / (new unitConversion().pxConversionMm(($('.ol-scale-line-inner').width()))));
+            }else {
+                line_data = Number($('.ol-scale-line-inner').eq(0).text().trim().split(' ')[0] / (new unitConversion().pxConversionMm(($('.ol-scale-line-inner').width()))));
+            }
+            $('#map_line').html('1mm:' + Math.round(line_data * 100) / 100 +'m')
+        },100)
+    }
+
+    var queryStruct = new Zondy.Service.QueryFeatureStruct();
+    queryStruct.IncludeGeometry = true;
+    var queryParam = new Zondy.Service.QueryParameter({
+        // geometry: Polygon, // 点  线 面搜
+        resultFormat: "json",
+        struct: queryStruct,
+        //<QS4101002014ZDJBXX:宗地代码>410104009020GB00016</QS4101002014ZDJBXX:宗地代码>
+        where: "宗地代码 in （'410104009020GB00016'）"
+    });
+    //http://10.0.0.114:6160/igs/rest/ogc/doc/QS4101002014ZDJBXX/WFSServer
+    //FeatureType
+    //QS4101002014ZDJBXX:D410100QS2014KZDJBXX
+    // http://10.0.0.114:6160/igs/rest/ogc/doc/QS4101002014ZDJBXX/WFSServer?service=wfs&version=1.1.0&request=GetFeature&typeName=QS4101002014ZDJBXX:D410100QS2014KZDJBXX&outputFormat=text/xml;%20subtype=gml/3.1.1&srsname=EPSG:4526
+    var queryService = new Zondy.Service.QueryDocFeature(queryParam, 'QS4101002014ZDJBXX', 0, {
+        ip: '10.0.0.114',
+        port: '6160'
+    });
+    //执行查询操作，querySuccess为查询回调函数
+    queryService.query(function (result) {
+        result = zy.map.parseFeatureToJson(result);
+        result.jsonData.map(function (ele, i) {
+            $('#zondy_code').html(ele['宗地代码'] ? ele['宗地代码'] : '');
+            $('#tudi_quanliren').html(ele['权利人'] ? ele['权利人'] : '');
+            $('#tufuhao').html(ele['图幅号'] ? ele['图幅号'] : '');
+            $('#area_num').html(ele['宗地面积_'] ? ele['宗地面积_'] : '');
+            // $('#zondy_code').html(ele['宗地代码']);
+            draw(ele.coordinatesStr)
+        });
+
+    });
+
+
+    function draw(lineStr) {
+        var lineStrpoly = lineStr;   // var lineStr = '471503.785097,3842002.232623 471526.932171,3841971.724752 471550.850247,3841941.817684 471557.275468,3841934.044066471563.752688,3841926.313849 471530.148401,3841927.636233 471528.002395,3841927.721232 471501.270726,3841928.775019 471501.981918,3841949.553076 471498.880708,3841952.518083 471517.313748,3841969.48254 471503.128504,3841983.044569 471503.785097,3842002.232623';
+        lineStr = lineStr.split(' ');
+        // debugger
+        var lineArr = [];
+        for (var i = 0; i < lineStr.length; i++) {
+            var xy = ol.proj.transform([parseFloat(lineStr[i].split(',')[0]), parseFloat(lineStr[i].split(',')[1])], "EPSG:4526", "EPSG:4326");
+            lineArr.push([xy[0], xy[1]])
+        }
+        // 画线
+        var color = [
+            'red',
+            'blue',
+            'black'
+        ];
+        var lineObjArr = [];
+        var lineObj = {};
+
+        for (var i = 0; i < lineArr.length - 1; i++) {
+            var angle;
+            var styleType = 'bottom';
+            var dudiao = false;
+            var startPoint;
+            var y_duixiao = false;
+            // 距离
+
+            var wgs84Sphere = new ol.Sphere(6378137); // 算出来的m
+            var distance = wgs84Sphere.haversineDistance(lineArr[i], lineArr[i + 1]);
+            var x_distance = wgs84Sphere.haversineDistance(lineArr[i], [lineArr[i + 1][0], lineArr[i][1]]);
+            if (lineArr[i + 1][0] < lineArr[i][0]) {
+                dudiao = true;
+                if (lineArr[i + 1][1] > lineArr[i][1]) {
+                    angle = Math.acos(x_distance / distance) / Math.PI * 180 - 3;
+                    y_duixiao = true;
+                    styleType = 'top';
+
+                } else {
+                    angle = -1 * (Math.acos(x_distance / distance) / Math.PI * 180 - 3);
+                    y_duixiao = false;
+                    styleType = 'bottom';
+                }
+                y_duixiao = true;
+                cordinatestr = [lineArr[i + 1][0], lineArr[i + 1][1]];
+                cordinatestr1 = [lineArr[i][0], lineArr[i][1]];
+                startPoint = cordinatestr1;
+                // styleType = 'bottom';
+            } else {
+                dudiao = false;
+                if (lineArr[i + 1][1] > lineArr[i][1]) {
+                    styleType = 'top';
+                    y_duixiao = false;
+                    angle = -1 * (Math.acos(x_distance / distance) / Math.PI * 180 - 3);
+                } else {
+                    angle = Math.acos(x_distance / distance) / Math.PI * 180 - 3;
+                    styleType = 'bottom';
+                    y_duixiao = true;
+                }
+                // styleType = 'top';
+                // y_duixiao = false;
+                cordinatestr = [lineArr[i][0], lineArr[i][1]];
+                cordinatestr1 = [lineArr[i + 1][0], lineArr[i + 1][1]];
+                startPoint = cordinatestr
+            }
+            if (dudiao == false && y_duixiao == false) {
+                styleType = 'bottom'
+            }
+
+            lineObj['dudiao'] = dudiao;
+            lineObj['angle'] = angle;
+            lineObj['cordinatestr'] = cordinatestr;
+            lineObj['cordinatestr1'] = cordinatestr1;
+            lineObj['distance'] = distance;
+            lineObj['styleType'] = styleType;
+            lineObj['y_duixiao'] = y_duixiao;
+            lineObj['startPoint'] = startPoint;
+            lineObj['startPointTextName'] = 'J' + (i + 1);
+            lineObjArr.push(lineObj);
+            lineObj = {}
+        }
+
+        // 开始画线
+        // console.log(lineObjArr);
+        for (var j = 0; j < lineObjArr.length; j++) {
+            var Line = new ol.Feature({
+                geometry: new ol.geom.LineString([lineObjArr[j]['cordinatestr'], lineObjArr[j]['cordinatestr1']])
+            });
+            //设置线的样式
+            var testStyle = new ol.style.Text({
+                //位置
+                textAlign: lineObjArr[j]['styleType'],
+                //基准线
+                textBaseline: lineObjArr[j]['styleType'],//'bottom', 'top', 'middle', 'alphabetic', 'hanging', 'ideographic'. Default is 'alphabetic'.
+                //文字样式
+                font: 'normal 10px 微软雅黑',
+                // offsetY:5,
+                // offsetY: lineObjArr[j]['duihuan'] ? 8 : (-8),
+                // 旋转
+                rotation: Number(lineObjArr[j]['angle']) / 180 * Math.PI,
+                //文本内容
+                text: (Math.round(lineObjArr[j]['distance'] * 100) / 100).toString(),
+                textAlign: 'center',//'left', 'right', 'center', 'end' or 'start'. Default is 'start'.
+                //文本填充样式（即文字颜色）
+                fill: new ol.style.Fill({color: '#aa3300'}),
+                //  stroke: new ol.style.Stroke({ color: '#ffcc33', width: 2 })
+            });
+
+            var params = {
+                //填充色
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 255, 255, 0.2)'
+                }),
+                //边线颜色
+                stroke: new ol.style.Stroke({
+                    color: color[i],
+                    width: 1
+                }),
+                //形状
+                image: new ol.style.Circle({
+                    radius: 7,
+                    fill: new ol.style.Fill({
+                        color: '#ffcc33'
+                    })
+                })
+            };
+            params.text = testStyle;
+            Line.setStyle(new ol.style.Style(params));
+
+            //实例化一个矢量图层Vector作为绘制层
+            var source = new ol.source.Vector({
+                features: [Line]
+            });
+            //创建一个图层
+            var vector = new ol.layer.Vector({
+                source: source
+            });
+            //将绘制层添加到地图容器中
+            map.addLayer(vector);
+
+            //创建一个点
+            // console.log(lineObjArr[j]['startPointTextName']);
+            var point = new ol.Feature({
+                // geometry: new ol.geom.Point([113.65308916005098, 34.748010970069835]) // 火车站坐标
+                geometry: new ol.geom.Point(lineObjArr[j]['startPoint'])
+            });
+
+            //设置点1的样式信息
+            point.setStyle(new ol.style.Style({
+                text: new ol.style.Text({
+                    //位置
+                    textAlign: lineObjArr[j]['dudiao'] ? 'left' : 'right',
+                    //基准线 y_duixiao
+                    textBaseline: lineObjArr[j]['y_duixiao'] ? 'bottom' : 'top',
+                    //文字样式
+                    font: 'normal 16px 宋体',
+                    // fontWeight:'100',
+                    //文本内容
+                    text: lineObjArr[j]['startPointTextName'],
+                    //文本填充样式（即文字颜色）
+                    fill: new ol.style.Fill({color: '#000000'}),
+                    // stroke: new ol.style.Stroke({color: '#000000', width: 2})
+                }),
+                image: new ol.style.Circle({
+                    radius: 3,
+                    fill: new ol.style.Fill({
+                        color: '#000000'
+                    })
+                })
+            }));
+
+            //实例化一个矢量图层Vector作为绘制层
+            var source = new ol.source.Vector({
+                features: [point]
+            });
+            //创建一个图层
+            var vector = new ol.layer.Vector({
+                source: source
+            });
+            //将绘制层添加到地图容器中
+            map.addLayer(vector);
+        }
+        var pointArrs = new Array();
+        var coordinatesPolygon = lineStrpoly.split(" ");
+
+        for (var i = 0; i < coordinatesPolygon.length; i++) {
+            var c = coordinatesPolygon[i].split(",");
+            var x = parseFloat(c[0]);
+            var y = parseFloat(c[1]);
+            var point4326 = ol.proj.transform([x, y], "EPSG:4526", "EPSG:4326");
+            pointArrs.push(point4326);
+        }
+        var polygon = new ol.Feature({
+            //name: "polygonFeature_"+index,
+            geometry: new ol.geom.Polygon([pointArrs])
+        });
+
+        polygon.setStyle(new ol.style.Style({
+            text: new ol.style.Text({
+                //位置
+                textAlign: 'center',
+                //基准线 y_duixiao
+                textBaseline: 'middle',
+                //文字样式
+                font: 'normal 18px 宋体',
+                // color:'#eb7044',
+                // fontWeight:'100',
+                offsetY: 50,
+                //文本内容
+                text: '鑫苑城二号院\n\nGB00009\n--------\n071',
+                //文本填充样式（即文字颜色）
+                fill: new ol.style.Fill({color: '#000000'}),
+                // stroke: new ol.style.Stroke({color: '#000000', width: 2})
+            }),
+            image: new ol.style.Circle({
+                radius: 3,
+                fill: new ol.style.Fill({
+                    color: '#000000'
+                })
+            })
+        }));
+
+        //实例化一个矢量图层Vector作为绘制层
+        var source3 = new ol.source.Vector({
+            features: [polygon]
+        });
+        //创建一个图层
+        var vector3 = new ol.layer.Vector({
+            source: source3
+        });
+        //将绘制层添加到地图容器中
+        map.addLayer(vector3);
+
+        var view = map.getView();
+        view.fit(polygon.getGeometry().getExtent(), map.getSize());
+        var zoom = view.getZoom();
+        view.setZoom(zoom);
+        map.getView().on('change:resolution', ScaleLineFun);
+        ScaleLineFun();
+        // console.log(view.getResolution(),'=======');
+
+//打印 zyPrintConWraper
+        setTimeout(function () {
+            $('.ol-overlaycontainer-stopevent,#mapCon').css('display', 'none');
+            $('#mapConImage').css('display','block');
+            var image = new Image();
+            $('#mapConImage')[0].src = $('canvas')[0].toDataURL("image/png");
+            $("#zyPrintConWraper").printArea();
+        },2000)
+
+    }
+
+
+</script>
+</body>
+</html>

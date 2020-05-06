@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Use correct character set. -->
+  <meta charset="utf-8">
+  <!-- Tell IE to use the latest, best version. -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Make the application on mobile take up the full browser screen and disable user scaling. -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>02服务加载</title>
+  <script src="../js/Cesium.js"></script>
+  <link rel="stylesheet" href="../js/widgets.css">
+  <!--<script type="text/javascript" src="./js/require.min.js" data-main="./js/main"></script>-->
+  <style>
+    html,body,#cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cesiumContainer">
+  </div>
+  <div id="credit"></div>
+  <span id="mes" style="position: absolute;top:20px;left: 20px;z-index: 2;color: white;"></span>
+  <script>
+      // onload();
+    // function onload(Cesium) {
+
+      // var imageryProvider = new Cesium.SingleTileImageryProvider({
+      //   url:'./images/globe.jpg'
+      // });
+
+
+      var viewer = new Cesium.Viewer("cesiumContainer",{
+        baseLayerPicker:false,
+        // imageryProvider:imageryProvider
+      });
+
+      var provider1 = new Cesium.WebMapServiceImageryProvider({
+        // url: 'http://localhost:4222/arcgis/services/chinaserver/MapServer/WmsServer?',
+        // url: 'http://172.16.103.118:6080/arcgis/services/chinaserver/MapServer/WmsServer?',
+        // url:'http://172.16.103.118:6080/arcgis/services/hnserver/MapServer/WMSServer ',
+
+        // url:'http://localhost:4222/arcgis/services/hnserver/MapServer/WMSServer ',
+          ////8840
+        // url: 'http://localhost:8840/cesium/igs/rest/ogc/INDEX2019G/WMTSServer?layer=INDEX2019G&style=default&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix=6&TileCol=699&TileRow=-71'
+        url: 'http://localhost:8840/cesium/igs/rest/ogc/INDEX2019G/WMTSServer?',
+        layers: '0',
+        rectangle: Cesium.Rectangle.fromDegrees(113.15796159221239, 34.774804197830136, 113.39847933628013, 34.86300222655366),
+      });
+      viewer.imageryLayers.addImageryProvider(provider1);
+
+      // 设置视角
+      viewer.camera.setView({
+          destination : Cesium.Cartesian3.fromDegrees(113.28,34.82, 150000.0), // 设置位置
+          orientation: {
+              heading : Cesium.Math.toRadians(40.0), // z方向
+              pitch : Cesium.Math.toRadians(-90.0),// y倾斜角度
+              roll : 0//x
+          }
+      });
+
+      viewer.scene.debugShowFramesPerSecond = true;
+
+    // }
+  </script>
+</body>
+
+</html>
